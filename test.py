@@ -1,10 +1,12 @@
 import json
+from model import USE_RELU, predict
 
 with open("global_model.json") as f:
     model = json.load(f)
 w, b = model["w"], model["b"]
 
-print(f"model:  y_hat = {w:.4f} * x + {b:.4f}")
+act = "ReLU(w*x + b)" if USE_RELU else "w*x + b"
+print(f"model:  y_hat = {act}  (w={w:.4f}, b={b:.4f})")
 print(f"true:   y     = 2 * x + 1")
 print()
 
@@ -21,7 +23,7 @@ for i in (1, 2):
     print(f"{'x':>8} {'y':>8} {'y_hat':>8} {'error':>8}")
     for pt in data:
         x, y = pt["x"], pt["y"]
-        y_hat = w * x + b
+        y_hat = predict(w, b, x)
         err = y_hat - y
         abs_err.append(abs(err))
         sq_err.append(err * err)

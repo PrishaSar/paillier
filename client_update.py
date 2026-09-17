@@ -1,6 +1,7 @@
 import json
 import sys
 from paillier import encrypt, encode
+from model import predict, activation_grad
 
 client_id = sys.argv[1]
 
@@ -20,9 +21,11 @@ dw = 0.0
 db = 0.0
 for pt in data:
     x, y = pt["x"], pt["y"]
-    err = (w * x + b) - y
-    dw += err * x
-    db += err
+    z = w * x + b
+    err = predict(w, b, x) - y
+    dz = err * activation_grad(z)
+    dw += dz * x
+    db += dz
 dw = 2 * dw / N
 db = 2 * db / N
 
