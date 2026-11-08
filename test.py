@@ -1,40 +1,28 @@
 import json
-from model import USE_RELU, predict
+from model import point_x, predict_class
 
 with open("global_model.json") as f:
     model = json.load(f)
-w, b = model["w"], model["b"]
 
-act = "ReLU(w*x + b)" if USE_RELU else "w*x + b"
-print(f"model:  y_hat = {act}  (w={w:.4f}, b={b:.4f})")
-print(f"true:   y     = 2 * x + 1")
+print("float32 MLP  2-8-2  ReLU + softmax")
 print()
 
-all_abs = []
-all_sq = []
-
+all_ok = 0
+all_n = 0
 for i in (1, 2):
     with open(f"client_test_{i}.json") as f:
         data = json.load(f)
-
-    abs_err = []
-    sq_err = []
+    ok = 0
     print(f"client_test_{i}")
-    print(f"{'x':>8} {'y':>8} {'y_hat':>8} {'error':>8}")
+    print(f"{'x0':>8} {'x1':>8} {'y':>4} {'pred':>4}")
     for pt in data:
-        x, y = pt["x"], pt["y"]
-        y_hat = predict(w, b, x)
-        err = y_hat - y
-        abs_err.append(abs(err))
-        sq_err.append(err * err)
-        print(f" {x:8.4f} {y:8.4f} {y_hat:8.4f} {err:8.4f}")
+        pred = predict_class(model, point_x(pt))
+        y = int(pt["y"])
+        ok += pred == y
+        print(f"{pt['x0']:8.4f} {pt['x1']:8.4f} {y:4d} {pred:4d}")
+    acc = 100.0 * ok / len(data)
+    all_ok += ok
+    all_n += len(data)
+    print(f"  accuracy {acc:.1f}%\n")
 
-    mae = sum(abs_err) / len(abs_err)
-    mse = sum(sq_err) / len(sq_err)
-    all_abs.extend(abs_err)
-    all_sq.extend(sq_err)
-    print(f"  MAE {mae:.4f}   MSE {mse:.4f}\n")
-
-mae = sum(all_abs) / len(all_abs)
-mse = sum(all_sq) / len(all_sq)
-print(f"overall  MAE {mae:.4f}   MSE {mse:.4f}")
+print(f"overall  {100.0 * all_ok / all_n:.1f}%")
